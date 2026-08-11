@@ -1,12 +1,13 @@
 // Replace these placeholder values with your Firebase project configuration.
 // You can find them in the Firebase console under Project settings.
 window.FIREBASE_CONFIG = {
-  apiKey: '<YOUR_API_KEY>',
-  authDomain: '<YOUR_AUTH_DOMAIN>',
-  projectId: '<YOUR_PROJECT_ID>',
-  storageBucket: '<YOUR_STORAGE_BUCKET>',
-  messagingSenderId: '<YOUR_MESSAGING_SENDER_ID>',
-  appId: '<YOUR_APP_ID>'
+  apiKey: 'AIzaSyDt8Sz-UU709DT_f7mMwj8k_wFXAQgYins',
+  authDomain: 'hopicrunch.firebaseapp.com',
+  projectId: 'hopicrunch',
+  storageBucket: 'hopicrunch.firebasestorage.app',
+  messagingSenderId: '524680575152',
+  appId: '1:524680575152:web:7726c4d4de19b552a62375',
+  measurementId: 'G-EQE27WWQWE'
 };
 
 window.remoteDbEnabled = false;

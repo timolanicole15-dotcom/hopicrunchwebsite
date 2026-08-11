@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Items | HOPI CRUNCH-BY IAN</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">HOPI CRUNCH-BY IAN</div>
+      <nav>
+        <a href="index.html">Welcome</a>
+        <a href="order.html" class="active">Order Items</a>
+      </nav>
+    </header>
+
+    <main class="content">
+      <section class="page-title">
+        <p class="eyebrow">Available now</p>
+        <h1>Items to order</h1>
+        <p>Choose your favorite crunchy treat and place your order.</p>
+      </section>
+
+      <section class="product-grid">
+        <article class="card product-card" data-name="ORIGINAL" data-price="25">
+          <h2>ORIGINAL</h2>
+          <p>A classic crunchy flavor for everyday snacking.</p>
+          <span class="price">P25</span>
+          <div class="qty-controls">
+            <button class="qty-btn minus" type="button">−</button>
+            <span class="qty-value">0</span>
+            <button class="qty-btn plus" type="button">+</button>
+          </div>
+        </article>
+
+        <article class="card product-card" data-name="CHEESE" data-price="28">
+          <h2>CHEESE</h2>
+          <p>Rich and savory cheese flavor in every bite.</p>
+          <span class="price">P28</span>
+          <div class="qty-controls">
+            <button class="qty-btn minus" type="button">−</button>
+            <span class="qty-value">0</span>
+            <button class="qty-btn plus" type="button">+</button>
+          </div>
+        </article>
+
+        <article class="card product-card" data-name="SOUR AND CREAM" data-price="36">
+          <h2>SOUR AND CREAM</h2>
+          <p>Cool, creamy, and perfectly crunchy.</p>
+          <span class="price">P36</span>
+          <div class="qty-controls">
+            <button class="qty-btn minus" type="button">−</button>
+            <span class="qty-value">0</span>
+            <button class="qty-btn plus" type="button">+</button>
+          </div>
+        </article>
+
+        <article class="card product-card" data-name="BBQ" data-price="40">
+          <h2>BBQ</h2>
+          <p>Smoky and bold flavor for barbecue lovers.</p>
+          <span class="price">P40</span>
+          <div class="qty-controls">
+            <button class="qty-btn minus" type="button">−</button>
+            <span class="qty-value">0</span>
+            <button class="qty-btn plus" type="button">+</button>
+          </div>
+        </article>
+
+        <article class="card product-card" data-name="SPICY" data-price="44">
+          <h2>SPICY</h2>
+          <p>A fiery option for customers who love extra kick.</p>
+          <span class="price">P44</span>
+          <div class="qty-controls">
+            <button class="qty-btn minus" type="button">−</button>
+            <span class="qty-value">0</span>
+            <button class="qty-btn plus" type="button">+</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="order-summary card">
+        <h2>Order Summary</h2>
+        <div id="selected-items" class="selected-items">No items selected yet.</div>
+        <div class="total-box">
+          <span>Total payment:</span>
+          <strong id="total-price">P0.00</strong>
+        </div>
+        <button id="order-btn" class="button" type="button">Click to order items</button>
+        <p id="order-status" class="status-message">
+          Please wait for admin confirmation after placing your order.
+        </p>
+      </section>
+    </main>
+
+    <script src="db.js"></script>
+    <script>
+      const storageKey = 'hopiCrunchCart';
+      const carts = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const productCards = document.querySelectorAll('.product-card');
+      const totalPriceEl = document.getElementById('total-price');
+      const selectedItemsEl = document.getElementById('selected-items');
+      const orderBtn = document.getElementById('order-btn');
+      const orderStatusEl = document.getElementById('order-status');
+      const currentUser = getCurrentUser();
+
+      if (!currentUser) {
+        window.location.href = 'login.html';
+      }
+
+      function saveCart() {
+        localStorage.setItem(storageKey, JSON.stringify(carts));
+      }
+
+      function updateView() {
+        let total = 0;
+        const selectedItems = [];
+
+        productCards.forEach((card) => {
+          const name = card.dataset.name;
+          const price = Number(card.dataset.price);
+          const qty = Number(carts[name] || 0);
+          const qtyValue = card.querySelector('.qty-value');
+
+          qtyValue.textContent = qty;
+          card.classList.toggle('selected', qty > 0);
+
+          if (qty > 0) {
+            selectedItems.push(`${name} x${qty}`);
+            total += qty * price;
+          }
+        });
+
+        selectedItemsEl.innerHTML = selectedItems.length
+          ? selectedItems.map((item) => `<div>${item}</div>`).join('')
+          : '<div>No items selected yet.</div>';
+
+        totalPriceEl.textContent = `₱${total.toFixed(2)}`;
+      }
+
+      productCards.forEach((card) => {
+        const name = card.dataset.name;
+        const plusBtn = card.querySelector('.plus');
+        const minusBtn = card.querySelector('.minus');
+
+        plusBtn.addEventListener('click', () => {
+          carts[name] = (Number(carts[name]) || 0) + 1;
+          saveCart();
+          updateView();
+        });
+
+        minusBtn.addEventListener('click', () => {
+          carts[name] = Math.max(0, (Number(carts[name]) || 0) - 1);
+          saveCart();
+          updateView();
+        });
+      });
+
+      orderBtn.addEventListener('click', () => {
+        let total = 0;
+        const selectedItems = [];
+
+        productCards.forEach((card) => {
+          const name = card.dataset.name;
+          const price = Number(card.dataset.price);
+          const qty = Number(carts[name] || 0);
+
+          if (qty > 0) {
+            selectedItems.push({ name, qty, price });
+            total += qty * price;
+          }
+        });
+
+        if (selectedItems.length === 0) {
+          orderStatusEl.textContent = 'Please select at least one item before ordering.';
+          orderStatusEl.className = 'status-message error';
+          return;
+        }
+
+        const orders = getOrders();
+        orders.push({ user: currentUser, items: selectedItems, total, createdAt: new Date().toISOString() });
+        saveOrders(orders);
+        saveCart();
+
+        selectedItems.forEach((item) => {
+          carts[item.name] = 0;
+        });
+        saveCart();
+        updateView();
+
+        localStorage.setItem('hopiCrunchLastOrder', JSON.stringify({ user: currentUser, items: selectedItems, total }));
+        orderStatusEl.textContent = `Order received! Please wait for admin confirmation. Total payment: ₱${total.toFixed(2)}`;
+        orderStatusEl.className = 'status-message success';
+      });
+
+      updateView();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login | HOPI CRUNCH-BY IAN</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">HOPI CRUNCH-BY IAN</div>
+      <nav>
+        <a href="index.html">Welcome</a>
+        <a href="order.html">Order Items</a>
+        <a href="admin-login.html" class="active">Admin Login</a>
+      </nav>
+    </header>
+
+    <main class="content">
+      <section class="page-title">
+        <p class="eyebrow">Admin access</p>
+        <h1>Administrator login</h1>
+        <p>Use the admin credentials to view all user orders.</p>
+      </section>
+
+      <section class="card form-card">
+        <form id="admin-login-form">
+          <div class="form-group">
+            <label for="admin-username">Admin Username</label>
+            <input id="admin-username" name="admin-username" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="admin-password">Password</label>
+            <input id="admin-password" name="admin-password" type="password" required />
+          </div>
+          <button class="button" type="submit">Login as admin</button>
+          <div id="admin-login-status" class="status-message"></div>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      const ADMIN_USERNAME = 'marksatairapan';
+      const ADMIN_PASSWORD = 'pogiako123';
+      const adminForm = document.getElementById('admin-login-form');
+      const adminStatus = document.getElementById('admin-login-status');
+
+      adminForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const username = document.getElementById('admin-username').value.trim();
+        const password = document.getElementById('admin-password').value.trim();
+
+        if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+          adminStatus.textContent = 'Incorrect admin credentials.';
+          adminStatus.className = 'status-message error';
+          return;
+        }
+
+        localStorage.setItem('hopiCrunchAdminLoggedIn', 'true');
+        window.location.href = 'admin.html';
+      });
+    </script>
+  </body>
+</html>

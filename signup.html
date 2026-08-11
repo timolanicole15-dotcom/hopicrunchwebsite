@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up | HOPI CRUNCH-BY IAN</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">HOPI CRUNCH-BY IAN</div>
+      <nav>
+        <a href="index.html">Welcome</a>
+        <a href="order.html">Order Items</a>
+        <a href="login.html">Login</a>
+      </nav>
+    </header>
+
+    <main class="content">
+      <section class="page-title">
+        <p class="eyebrow">Create account</p>
+        <h1>Sign up in simple steps</h1>
+        <p>Enter your details and start ordering items today.</p>
+      </section>
+
+      <section class="card form-card">
+        <form id="signup-form">
+          <div class="form-group">
+            <label for="full-name">Full Name</label>
+            <input id="full-name" name="full-name" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="cp-number">CP Number</label>
+            <input id="cp-number" name="cp-number" type="tel" required />
+          </div>
+          <div class="form-group">
+            <label for="address">Address</label>
+            <textarea id="address" name="address" rows="3" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required />
+          </div>
+          <button class="button" type="submit">Create account</button>
+          <div id="signup-status" class="status-message"></div>
+        </form>
+        <p>
+          Already have an account? <a href="login.html">Login here</a>.
+        </p>
+      </section>
+    </main>
+
+    <script src="db.js"></script>
+    <script>
+      const signupForm = document.getElementById('signup-form');
+      const signupStatus = document.getElementById('signup-status');
+
+      signupForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const user = {
+          name: document.getElementById('full-name').value.trim(),
+          cpNumber: document.getElementById('cp-number').value.trim(),
+          address: document.getElementById('address').value.trim(),
+          username: document.getElementById('username').value.trim(),
+          password: document.getElementById('password').value.trim(),
+        };
+
+        if (!user.name || !user.cpNumber || !user.address || !user.username || !user.password) {
+          signupStatus.textContent = 'Please fill in all fields.';
+          signupStatus.className = 'status-message error';
+          return;
+        }
+
+        const existingUser = findUserByUsername(user.username);
+        if (existingUser) {
+          signupStatus.textContent = 'That username is already taken. Please choose another one.';
+          signupStatus.className = 'status-message error';
+          return;
+        }
+
+        const users = getUsers();
+        users.push(user);
+        saveUsers(users);
+        setCurrentUser(user);
+
+        signupStatus.textContent = 'Account created successfully. Redirecting to order page...';
+        signupStatus.className = 'status-message success';
+
+        setTimeout(() => {
+          window.location.href = 'order.html';
+        }, 1200);
+      });
+    </script>
+  </body>
+</html>

@@ -93,6 +93,9 @@
       </section>
     </main>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-init.js"></script>
     <script src="db.js"></script>
     <script>
       const storageKey = 'hopiCrunchCart';
@@ -156,7 +159,7 @@
         });
       });
 
-      orderBtn.addEventListener('click', () => {
+      orderBtn.addEventListener('click', async () => {
         let total = 0;
         const selectedItems = [];
 
@@ -177,9 +180,8 @@
           return;
         }
 
-        const orders = getOrders();
-        orders.push({ user: currentUser, items: selectedItems, total, createdAt: new Date().toISOString() });
-        saveOrders(orders);
+        const order = { user: currentUser, items: selectedItems, total, createdAt: new Date().toISOString() };
+        await saveOrder(order);
         saveCart();
 
         selectedItems.forEach((item) => {
@@ -188,7 +190,7 @@
         saveCart();
         updateView();
 
-        localStorage.setItem('hopiCrunchLastOrder', JSON.stringify({ user: currentUser, items: selectedItems, total }));
+        localStorage.setItem('hopiCrunchLastOrder', JSON.stringify(order));
         orderStatusEl.textContent = `Order received! Please wait for admin confirmation. Total payment: ₱${total.toFixed(2)}`;
         orderStatusEl.className = 'status-message success';
       });

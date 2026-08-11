@@ -54,12 +54,15 @@
       </section>
     </main>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-init.js"></script>
     <script src="db.js"></script>
     <script>
       const signupForm = document.getElementById('signup-form');
       const signupStatus = document.getElementById('signup-status');
 
-      signupForm.addEventListener('submit', (event) => {
+      signupForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const user = {
@@ -76,16 +79,14 @@
           return;
         }
 
-        const existingUser = findUserByUsername(user.username);
+        const existingUser = await findUserByUsername(user.username);
         if (existingUser) {
           signupStatus.textContent = 'That username is already taken. Please choose another one.';
           signupStatus.className = 'status-message error';
           return;
         }
 
-        const users = getUsers();
-        users.push(user);
-        saveUsers(users);
+        await saveUser(user);
         setCurrentUser(user);
 
         signupStatus.textContent = 'Account created successfully. Redirecting to order page...';

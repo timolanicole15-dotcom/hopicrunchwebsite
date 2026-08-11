@@ -42,17 +42,20 @@
       </section>
     </main>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-init.js"></script>
     <script src="db.js"></script>
     <script>
       const loginForm = document.getElementById('login-form');
       const loginStatus = document.getElementById('login-status');
 
-      loginForm.addEventListener('submit', (event) => {
+      loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
-        const user = findUserByUsername(username);
+        const user = await findUserByUsername(username);
 
         if (!user || user.password !== password) {
           loginStatus.textContent = 'Username or password is incorrect.';

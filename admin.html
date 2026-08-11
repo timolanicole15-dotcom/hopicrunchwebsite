@@ -40,24 +40,32 @@
       </section>
     </main>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-init.js"></script>
     <script src="db.js"></script>
     <script>
       const adminError = document.getElementById('admin-error');
       const ordersTableBody = document.querySelector('#orders-table tbody');
       const adminLoggedIn = localStorage.getItem('hopiCrunchAdminLoggedIn');
 
-      if (adminLoggedIn !== 'true') {
-        adminError.textContent = 'You must log in as admin first.';
-        ordersTableBody.innerHTML = '<tr><td colspan="5">Access denied.</td></tr>';
-      } else {
-        const orders = getOrders();
+      async function renderOrders() {
+        if (adminLoggedIn !== 'true') {
+          adminError.textContent = 'You must log in as admin first.';
+          ordersTableBody.innerHTML = '<tr><td colspan="5">Access denied.</td></tr>';
+          return;
+        }
+
+        const orders = await getOrders();
         if (!orders.length) {
           ordersTableBody.innerHTML = '<tr><td colspan="5">No orders have been placed yet.</td></tr>';
-        } else {
-          ordersTableBody.innerHTML = orders
-            .map((order) => {
-              const items = order.items.map((item) => `${item.name} x${item.qty}`).join(', ');
-              return `
+          return;
+        }
+
+        ordersTableBody.innerHTML = orders
+          .map((order) => {
+            const items = order.items.map((item) => `${item.name} x${item.qty}`).join(', ');
+            return `
                 <tr>
                   <td>${order.user.name} (${order.user.username})</td>
                   <td>${order.user.cpNumber}</td>
@@ -66,10 +74,11 @@
                   <td>₱${order.total.toFixed(2)}</td>
                 </tr>
               `;
-            })
-            .join('');
-        }
+          })
+          .join('');
       }
+
+      renderOrders();
     </script>
   </body>
 </html>

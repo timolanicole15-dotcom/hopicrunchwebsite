@@ -10,7 +10,7 @@
     <header class="topbar">
       <div class="brand">HOPI CRUNCH-BY IAN</div>
       <nav>
-        <a href="admin-login.html" class="active">Admin Login</a>
+        <a href="#" id="logout-btn">Logout</a>
       </nav>
     </header>
 
@@ -46,6 +46,16 @@
       const adminError = document.getElementById('admin-error');
       const ordersTableBody = document.querySelector('#orders-table tbody');
       const adminLoggedIn = localStorage.getItem('hopiCrunchAdminLoggedIn');
+      const logoutBtn = document.getElementById('logout-btn');
+
+      // Logout Functionality
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          localStorage.removeItem('hopiCrunchAdminLoggedIn');
+          window.location.href = 'admin-login.html';
+        });
+      }
 
       async function renderOrders() {
         if (adminLoggedIn !== 'true') {

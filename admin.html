@@ -83,7 +83,8 @@
           </select>
         </div>
 
-        <table id="orders-table">
+        <!-- Added class="orders-table" for mobile responsiveness -->
+        <table id="orders-table" class="orders-table">
           <thead>
             <tr>
               <th>User</th>
@@ -139,7 +140,7 @@
         });
       }
 
-      // Render the Orders Table
+      // Render the Orders Table with data-label for Mobile CSS
       function renderTableRows(ordersToRender) {
         if (!ordersToRender.length) {
           ordersTableBody.innerHTML = '<tr><td colspan="6">No orders found.</td></tr>';
@@ -167,12 +168,12 @@
 
             return `
               <tr>
-                <td>${order.user.name} (${order.user.username})</td>
-                <td>${order.user.cpNumber}</td>
-                <td>${order.user.address}</td>
-                <td>${items}</td>
-                <td>₱${order.total.toFixed(2)}</td>
-                <td>${actionContent}</td>
+                <td data-label="User">${order.user.name} (${order.user.username})</td>
+                <td data-label="Contact">${order.user.cpNumber}</td>
+                <td data-label="Address">${order.user.address}</td>
+                <td data-label="Items ordered">${items}</td>
+                <td data-label="Total">₱${order.total.toFixed(2)}</td>
+                <td data-label="Status / Action">${actionContent}</td>
               </tr>
             `;
           })
@@ -207,12 +208,10 @@
 
       // Status Update Function
       async function updateOrderStatus(orderId, newStatus) {
-        // If updateOrderStatus in db.js exists, call it. Otherwise, update local state:
         if (typeof updateOrder === 'function') {
           await updateOrder(orderId, { status: newStatus });
         }
         
-        // Update local object for immediate UI refresh
         const targetOrder = currentOrders.find(o => o.id === orderId);
         if (targetOrder) {
           targetOrder.status = newStatus;

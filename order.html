@@ -1,10 +1,35 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Order Items | HOPI CRUNCH-BY IAN</title>
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Order History Styles */
+      .order-history-section {
+        margin-top: 30px;
+      }
+      .status-badge {
+        font-weight: bold;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        font-size: 14px;
+      }
+      .status-badge.confirmed {
+        color: #155724;
+        background-color: #d4edda;
+      }
+      .status-badge.denied {
+        color: #721c24;
+        background-color: #f8d7da;
+      }
+      .status-badge.pending {
+        color: #856404;
+        background-color: #fff3cd;
+      }
+    </style>
   </head>
   <body>
     <header class="topbar">
@@ -12,12 +37,13 @@
       <nav>
         <a href="index.html">Welcome</a>
         <a href="order.html" class="active">Order Items</a>
+        <a href="#" id="logout-link">Logout</a>
       </nav>
     </header>
 
     <main class="content">
       <section class="page-title">
-        <p class="eyebrow">Available now</p>
+        <p class="eyebrow" id="welcome-user">Available now</p>
         <h1>Items to order</h1>
         <p>Choose your favorite crunchy treat and place your order.</p>
       </section>
@@ -91,6 +117,24 @@
           Please wait for admin confirmation after placing your order.
         </p>
       </section>
+
+      <!-- Customer Order History Section -->
+      <section class="card table-card order-history-section">
+        <h2>My Order History</h2>
+        <table id="my-orders-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Items Ordered</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4">Loading orders...</td></tr>
+          </tbody>
+        </table>
+      </section>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -105,10 +149,24 @@
       const selectedItemsEl = document.getElementById('selected-items');
       const orderBtn = document.getElementById('order-btn');
       const orderStatusEl = document.getElementById('order-status');
+      const myOrdersTableBody = document.querySelector('#my-orders-table tbody');
+      const logoutLink = document.getElementById('logout-link');
       const currentUser = getCurrentUser();
 
+      // Ensure user is logged in
       if (!currentUser) {
         window.location.href = 'login.html';
+      } else {
+        document.getElementById('welcome-user').textContent = `Welcome, ${currentUser.name || currentUser.username}!`;
+      }
+
+      // Logout handler
+      if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          clearCurrentUser();
+          window.location.href = 'login.html';
+        });
       }
 
       function saveCart() {
@@ -159,6 +217,48 @@
         });
       });
 
+      // Render logged-in user's orders and status badges
+      async function renderMyOrders() {
+        const allOrders = await getOrders();
+        
+        // Filter orders placed by this current user
+        const userOrders = allOrders.filter(
+          (o) => o.user && o.user.username === currentUser.username
+        );
+
+        if (!userOrders.length) {
+          myOrdersTableBody.innerHTML = '<tr><td colspan="4">You haven\'t placed any orders yet.</td></tr>';
+          return;
+        }
+
+        myOrdersTableBody.innerHTML = userOrders
+          .map((order) => {
+            const items = order.items.map((item) => `${item.name} x${item.qty}`).join(', ');
+            
+            // Generate status badge depending on Admin confirmation
+            let statusMarkup = '<span class="status-badge pending">⏳ Pending</span>';
+            if (order.status === 'confirmed') {
+              statusMarkup = '<span class="status-badge confirmed">✓ Confirmed</span>';
+            } else if (order.status === 'denied') {
+              statusMarkup = '<span class="status-badge denied">✗ Denied</span>';
+            }
+
+            const dateStr = order.createdAt 
+              ? new Date(order.createdAt).toLocaleDateString() 
+              : 'Recent';
+
+            return `
+              <tr>
+                <td>${dateStr}</td>
+                <td>${items}</td>
+                <td>₱${order.total.toFixed(2)}</td>
+                <td>${statusMarkup}</td>
+              </tr>
+            `;
+          })
+          .join('');
+      }
+
       orderBtn.addEventListener('click', async () => {
         let total = 0;
         const selectedItems = [];
@@ -180,9 +280,16 @@
           return;
         }
 
-        const order = { user: currentUser, items: selectedItems, total, createdAt: new Date().toISOString() };
+        // Include status: 'pending' by default when order is created
+        const order = { 
+          user: currentUser, 
+          items: selectedItems, 
+          total, 
+          status: 'pending',
+          createdAt: new Date().toISOString() 
+        };
+        
         await saveOrder(order);
-        saveCart();
 
         selectedItems.forEach((item) => {
           carts[item.name] = 0;
@@ -193,9 +300,13 @@
         localStorage.setItem('hopiCrunchLastOrder', JSON.stringify(order));
         orderStatusEl.textContent = `Order received! Please wait for admin confirmation. Total payment: ₱${total.toFixed(2)}`;
         orderStatusEl.className = 'status-message success';
+
+        // Refresh orders table immediately
+        renderMyOrders();
       });
 
       updateView();
+      renderMyOrders();
     </script>
   </body>
 </html>

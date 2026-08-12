@@ -23,7 +23,7 @@ async function getUserRemote(username) {
 }
 
 async function findUserByUsername(username) {
-  if (window.remoteDbEnabled) {
+  if (window.remoteDbEnabled && window.firebaseDb) {
     const remoteUser = await getUserRemote(username);
     if (remoteUser) {
       return remoteUser;
@@ -49,7 +49,7 @@ async function saveUser(user) {
     try {
       await window.firebaseDb.collection('users').doc(user.username).set(user);
     } catch (error) {
-      console.warn('Remote user save failed:', error);
+      console.error('Remote user save failed:', error);
     }
   }
 }
@@ -62,63 +62,68 @@ function saveOrdersLocal(orders) {
   localStorage.setItem(DB_ORDERS_KEY, JSON.stringify(orders));
 }
 
+/**
+ * Fetches orders directly from Firestore across network
+ */
 async function getOrders() {
   if (window.remoteDbEnabled && window.firebaseDb) {
     try {
       const snapshot = await window.firebaseDb.collection('orders').orderBy('createdAt', 'desc').get();
       return snapshot.docs.map((doc) => {
         const data = doc.data();
-        return { id: doc.id, ...data }; // Attach Firestore document ID
+        return { ...data, id: doc.id }; // Attach real Firestore Document ID
       });
     } catch (error) {
-      console.warn('Remote order fetch failed:', error);
+      console.error('Remote order fetch failed (Check Firebase Rules):', error);
     }
   }
 
   return getOrdersLocal();
 }
 
+/**
+ * Saves order to Firestore FIRST to guarantee a universal Document ID across networks
+ */
 async function saveOrder(order) {
-  const orders = getOrdersLocal();
-  // Generate a local ID if not present
-  if (!order.id) {
-    order.id = 'order_' + Date.now();
-  }
-  
-  orders.push(order);
-  saveOrdersLocal(orders);
-
   if (window.remoteDbEnabled && window.firebaseDb) {
     try {
+      // Save directly to Firestore to obtain auto-generated ID
       const docRef = await window.firebaseDb.collection('orders').add(order);
-      // Update local storage object to hold the real Firestore document ID
       order.id = docRef.id;
-      saveOrdersLocal(orders);
     } catch (error) {
-      console.warn('Remote order save failed:', error);
+      console.error('Remote order save failed (Check Firebase Rules):', error);
+      if (!order.id) order.id = 'order_' + Date.now();
     }
+  } else {
+    if (!order.id) order.id = 'order_' + Date.now();
   }
+
+  // Backup to local storage
+  const orders = getOrdersLocal();
+  orders.push(order);
+  saveOrdersLocal(orders);
 }
 
 /**
- * Updates an existing order's status or data both locally and in Firestore.
+ * Updates order status globally in Firestore by document ID
  */
 async function updateOrder(orderId, updateData) {
-  // 1. Update in LocalStorage
+  // Update Firestore across network
+  if (window.remoteDbEnabled && window.firebaseDb) {
+    try {
+      await window.firebaseDb.collection('orders').doc(orderId).update(updateData);
+      console.log(`Order ${orderId} successfully updated in Firestore to:`, updateData);
+    } catch (error) {
+      console.error('Remote order status update failed:', error);
+    }
+  }
+
+  // Fallback / local sync
   const orders = getOrdersLocal();
   const index = orders.findIndex((order) => order.id === orderId);
   if (index !== -1) {
     orders[index] = { ...orders[index], ...updateData };
     saveOrdersLocal(orders);
-  }
-
-  // 2. Update in Firestore Remote DB
-  if (window.remoteDbEnabled && window.firebaseDb) {
-    try {
-      await window.firebaseDb.collection('orders').doc(orderId).update(updateData);
-    } catch (error) {
-      console.warn('Remote order update failed:', error);
-    }
   }
 }
 

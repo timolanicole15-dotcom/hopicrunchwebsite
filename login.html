@@ -1,13 +1,11 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Crucial for scaling correctly on both phones and high-res laptop displays -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | HOPI CRUNCH-BY IAN</title>
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=6" />
     <style>
-      /* Ensure links and inputs are touch-friendly and scannable on mobile */
       .form-card a {
         color: var(--accent, #d97706);
         font-weight: 700;
@@ -75,17 +73,7 @@
       const loginStatus = document.getElementById('login-status');
       const loginBtn = document.getElementById('login-btn');
 
-      // 1. AUTO-REDIRECT CHECK: If user is ALREADY logged in on this laptop/phone, send them straight to order page
-      document.addEventListener('DOMContentLoaded', () => {
-        if (typeof getCurrentUser === 'function') {
-          const loggedInUser = getCurrentUser();
-          if (loggedInUser) {
-            window.location.href = 'order.html';
-          }
-        }
-      });
-
-      // 2. FORM SUBMIT HANDLER
+      // FORM SUBMIT HANDLER
       loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -95,14 +83,13 @@
         const username = usernameInput.value.trim();
         const password = passwordInput.value.trim();
 
-        // Feedback during database call (prevents double tapping on phones/laptops)
+        // UI loading state
         loginBtn.disabled = true;
         loginBtn.textContent = 'Logging in...';
         loginStatus.textContent = '';
         loginStatus.className = 'status-message';
 
         try {
-          // Check if helper function exists
           if (typeof findUserByUsername !== 'function') {
             throw new Error('Database script (db.js) failed to load properly.');
           }
@@ -127,7 +114,6 @@
           loginStatus.textContent = 'Login successful! Redirecting...';
           loginStatus.className = 'status-message success';
 
-          // Small delay for UX transition
           setTimeout(() => {
             window.location.href = 'order.html';
           }, 600);

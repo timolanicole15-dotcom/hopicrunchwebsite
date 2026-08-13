@@ -1,10 +1,31 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Crucial for scaling correctly on both phones and high-res laptop displays -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | HOPI CRUNCH-BY IAN</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=5" />
+    <style>
+      /* Ensure links and inputs are touch-friendly and scannable on mobile */
+      .form-card a {
+        color: var(--accent, #d97706);
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .form-card a:hover {
+        text-decoration: underline;
+      }
+      .signup-link {
+        margin-top: 18px;
+        text-align: center;
+        font-size: 0.95rem;
+      }
+      .button:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+    </style>
   </head>
   <body>
     <header class="topbar">
@@ -27,44 +48,97 @@
         <form id="login-form">
           <div class="form-group">
             <label for="username">Username</label>
-            <input id="username" name="username" type="text" required />
+            <input id="username" name="username" type="text" autocomplete="username" required />
           </div>
           <div class="form-group">
             <label for="password">Password</label>
-            <input id="password" name="password" type="password" required />
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
           </div>
-          <button class="button" type="submit">Login</button>
+          <button class="button" id="login-btn" type="submit">Login</button>
           <div id="login-status" class="status-message"></div>
         </form>
-        <p>
+
+        <p class="signup-link">
           Don't have an account yet? <a href="signup.html">Sign up here</a>.
         </p>
       </section>
     </main>
 
+    <!-- Firebase Compat Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="firebase-init.js"></script>
     <script src="db.js"></script>
+
     <script>
       const loginForm = document.getElementById('login-form');
       const loginStatus = document.getElementById('login-status');
+      const loginBtn = document.getElementById('login-btn');
 
+      // 1. AUTO-REDIRECT CHECK: If user is ALREADY logged in on this laptop/phone, send them straight to order page
+      document.addEventListener('DOMContentLoaded', () => {
+        if (typeof getCurrentUser === 'function') {
+          const loggedInUser = getCurrentUser();
+          if (loggedInUser) {
+            window.location.href = 'order.html';
+          }
+        }
+      });
+
+      // 2. FORM SUBMIT HANDLER
       loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-        const user = await findUserByUsername(username);
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
 
-        if (!user || user.password !== password) {
-          loginStatus.textContent = 'Username or password is incorrect.';
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        // Feedback during database call (prevents double tapping on phones/laptops)
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Logging in...';
+        loginStatus.textContent = '';
+        loginStatus.className = 'status-message';
+
+        try {
+          // Check if helper function exists
+          if (typeof findUserByUsername !== 'function') {
+            throw new Error('Database script (db.js) failed to load properly.');
+          }
+
+          const user = await findUserByUsername(username);
+
+          if (!user || user.password !== password) {
+            loginStatus.textContent = 'Username or password is incorrect.';
+            loginStatus.className = 'status-message error';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+            return;
+          }
+
+          // Save current user session
+          if (typeof setCurrentUser === 'function') {
+            setCurrentUser(user);
+          } else {
+            localStorage.setItem('hopiCrunchCurrentUser', JSON.stringify(user));
+          }
+
+          loginStatus.textContent = 'Login successful! Redirecting...';
+          loginStatus.className = 'status-message success';
+
+          // Small delay for UX transition
+          setTimeout(() => {
+            window.location.href = 'order.html';
+          }, 600);
+
+        } catch (err) {
+          console.error('Login Error:', err);
+          loginStatus.textContent = 'Connection error. Please check your network and try again.';
           loginStatus.className = 'status-message error';
-          return;
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Login';
         }
-
-        setCurrentUser(user);
-        window.location.href = 'order.html';
       });
     </script>
   </body>
